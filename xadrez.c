@@ -1,13 +1,13 @@
 /*
-  MateCheck — Nível Mestre
+  MateCheck — Nível Mestre (ajustado)
   - Bispo: 5 casas na diagonal superior direita (recursivo + loops aninhados)
   - Torre: 5 casas para a Direita (recursivo)
   - Rainha: 8 casas para a Esquerda (recursivo)
-  - Cavalo: 1 movimento em L para cima à direita (loops com variáveis/condições múltiplas; uso de continue/break)
+  - Cavalo: 1 movimento em L para cima à direita (loops aninhados, múltiplas variáveis/condições, continue/break)
 
   Observação de saída:
   - Apenas as direções básicas são impressas ("Cima", "Baixo", "Esquerda", "Direita").
-  - Para o Bispo (diagonal), imprimimos a combinação como duas linhas por passo: "Cima" seguido de "Direita".
+  - Para o Bispo (diagonal), imprimimos duas linhas por passo: "Cima" e "Direita".
 */
 
 #include <stdio.h>
@@ -29,7 +29,6 @@ void mover_cavalo_cima_direita(void);
 /* Utilitário: separador em branco usando do-while (para organizar a saída) */
 static void separador_em_branco(int linhas) {
     if (linhas <= 0) return;
-    /* Garante pelo menos 1 execução (do-while) */
     do {
         putchar('\n');
         linhas--;
@@ -40,28 +39,24 @@ static void separador_em_branco(int linhas) {
 
 /*
   Bispo: diagonal superior direita.
-  Requisitos atendidos:
   - Recursão para percorrer 'passos'.
-  - Loops aninhados dentro de cada passo para combinar as direções básicas.
-  - Saída apenas com as direções básicas.
+  - Loops aninhados por passo para combinar direções básicas.
 */
 void mover_bispo_recursivo(int passos) {
     if (passos <= 0) return;
 
-    /* Loops aninhados: combinando 'Cima' e 'Direita' para cada passo */
     const char *vertical = "Cima";
     const char *horizontal = "Direita";
 
-    for (int i = 0; i < 1; i++) {   /* loop externo (p. ex., eixo vertical) */
+    for (int i = 0; i < 1; i++) {
         int j = 0;
-        while (j < 1) {             /* loop interno (p. ex., eixo horizontal) */
+        while (j < 1) {
             printf("%s\n", vertical);
             printf("%s\n", horizontal);
             j++;
         }
     }
 
-    /* Chamada recursiva para o próximo passo */
     mover_bispo_recursivo(passos - 1);
 }
 
@@ -83,42 +78,56 @@ void mover_rainha_recursiva(int passos) {
     mover_rainha_recursiva(passos - 1);
 }
 
-/* --------------------- Movimentação do Cavalo (Loops) --------------------- */
+/* --------------------- Movimentação do Cavalo (Loops Aninhados) --------------------- */
 
 /*
-  Cavalo: 1 L para cima à direita (2 para cima, 1 para a direita).
-  Requisitos atendidos:
-  - Loop com múltiplas variáveis e condição composta.
-  - Uso de continue (pular para a próxima iteração) e break (encerrar).
+  Cavalo: 1 L para cima à direita (2 para "Cima", 1 para "Direita").
+  - Loop externo: percorre os dois segmentos do L (segmento 0 = vertical; segmento 1 = horizontal).
+  - Loop interno: executa os passos do segmento corrente.
+  - Múltiplas variáveis no cabeçalho do loop externo (seg, up, right).
+  - Condições múltiplas, uso de continue e break.
 */
 void mover_cavalo_cima_direita(void) {
     const int alvoUp = CAVALO_UP;       /* 2 */
     const int alvoRight = CAVALO_RIGHT; /* 1 */
 
-    /* upDone e rightDone controlados no próprio cabeçalho do for; condição composta (OR) */
-    for (int upDone = 0, rightDone = 0; (upDone < alvoUp) || (rightDone < alvoRight); ) {
+    for (int seg = 0, up = 0, right = 0; seg < 2; ++seg) {
+        /* Define quantos passos executar neste segmento (vertical primeiro, depois horizontal) */
+        const int passosAlvo = (seg == 0) ? alvoUp : alvoRight;
 
-        /* Avança em 'Cima' até atingir 2 passos */
-        if (upDone < alvoUp) {
-            printf("Cima\n");
-            upDone++;
+        for (int k = 0; k < passosAlvo; ++k) {
+            /* Segurança: não permite iniciar o segmento horizontal antes de completar o vertical */
+            if (seg == 1 && up < alvoUp) {
+                /* Ainda não completou os 2 "Cima": ignora esta iteração do loop interno */
+                continue; /* continue no loop interno até que a condição seja satisfeita */
+            }
 
-            /* Exemplo de uso de 'continue': após o primeiro "Cima", vamos direto à próxima iteração */
-            if (upDone == 1 && rightDone == 0) {
-                continue;
+            if (seg == 0) {
+                /* Segmento vertical */
+                printf("Cima\n");
+                up++;
+
+                /* Após o primeiro "Cima" (up == 1) e ainda sem mover à direita, apenas continue. */
+                if (up == 1 && right == 0) {
+                    continue; /* demonstração explícita do uso didático de continue */
+                }
+
+                /* Se por algum motivo passamos do alvo (defesa), encerra este segmento. */
+                if (up >= alvoUp) {
+                    break; /* break no loop interno quando finaliza o segmento vertical */
+                }
+            } else {
+                /* Segmento horizontal */
+                printf("Direita\n");
+                right++;
+
+                /* Alcançou o 1 passo à direita? encerra imediatamente o segmento horizontal. */
+                if (right >= alvoRight) {
+                    break; /* demonstração de break no loop interno */
+                }
             }
         }
-
-        /* Depois completa "Direita" até 1 passo */
-        if (rightDone < alvoRight) {
-            printf("Direita\n");
-            rightDone++;
-        }
-
-        /* Exemplo de 'break' quando ambos objetivos foram atingidos */
-        if (upDone >= alvoUp && rightDone >= alvoRight) {
-            break;
-        }
+        /* Próximo segmento do L */
     }
 }
 
@@ -137,7 +146,7 @@ int main(void) {
     mover_rainha_recursiva(RAINHA_PASSOS);
     separador_em_branco(1);
 
-    /* Cavalo: 1 L para cima à direita (2x "Cima", 1x "Direita") */
+    /* Cavalo: 1 L para cima à direita (2x "Cima", 1x "Direita") com loops aninhados */
     mover_cavalo_cima_direita();
 
     return 0;
